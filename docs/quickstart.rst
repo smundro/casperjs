@@ -4,7 +4,7 @@
 Quickstart
 ==========
 
-Once CasperJS is :doc:`properly installed <installation>`, you can write your first script. You can use plain :ref:`Javascript <quickstart_javascript>` or :ref:`CoffeeScript <quickstart_coffeescript>`.
+Once CasperJS is :doc:`properly installed <installation>`, you can write your first script. You can use plain :ref:`Javascript <quickstart_javascript>` (or :ref:`CoffeeScript <quickstart_coffeescript>` with PhantomJS versions before 2.0).
 
 .. hint::
 
@@ -72,10 +72,15 @@ Fire up your favorite editor and save the javascript code below in a
     }
 
     casper.start('http://google.fr/', function() {
-        // search for 'casperjs' from google form
-        this.fill('form[action="/search"]', { q: 'casperjs' }, true);
+       // Wait for the page to be loaded
+       this.waitForSelector('form[action="/search"]');
     });
-
+   
+    casper.then(function() {
+       // search for 'casperjs' from google form
+       this.fill('form[action="/search"]', { q: 'casperjs' }, true);
+    });
+    
     casper.then(function() {
         // aggregate results for the 'casperjs' search
         links = this.evaluate(getLinks);
@@ -100,10 +105,10 @@ Run it:
 
     $ casperjs googlelinks.js
     20 links found:
-     - https://github.com/n1k0/casperjs
-     - https://github.com/n1k0/casperjs/issues/2
-     - https://github.com/n1k0/casperjs/tree/master/samples
-     - https://github.com/n1k0/casperjs/commits/master/
+     - https://github.com/casperjs/casperjs
+     - https://github.com/casperjs/casperjs/issues/2
+     - https://github.com/casperjs/casperjs/tree/master/samples
+     - https://github.com/casperjs/casperjs/commits/master/
      - http://www.facebook.com/people/Casper-Js/100000337260665
      - http://www.facebook.com/public/Casper-Js
      - http://hashtags.org/tag/CasperJS/
@@ -129,7 +134,7 @@ Run it:
 CoffeeScript version
 --------------------
 
-You can also write Casper scripts using the `CoffeeScript syntax <http://jashkenas.github.com/coffee-script/>`_:
+You can also write Casper scripts using the `CoffeeScript syntax <http://coffeescript.org/>`_:
 
 .. code-block:: coffeescript
 
@@ -160,6 +165,10 @@ You can also write Casper scripts using the `CoffeeScript syntax <http://jashken
       @echo(" - " + links.join("\n - ")).exit()
 
 Just remember to suffix your script with the ``.coffee`` extension.
+
+.. note::
+
+   CoffeeScript is not natively supported in PhantomJS versions 2.0.0 and above.  If you are going to use CoffeeScript you'll have to transpile it into vanilla Javascript.  See :ref:`known issues <known_issues>` for more details.
 
 A minimal testing script
 ------------------------

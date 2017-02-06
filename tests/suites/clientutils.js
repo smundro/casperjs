@@ -1,7 +1,6 @@
-/*global casper*/
-/*jshint strict:false*/
+/*eslint strict:0*/
 var fs = require('fs');
-var x = require('casper').selectXPath;
+var selectXPath = require('casper').selectXPath;
 
 function fakeDocument(html) {
     window.document.body.innerHTML = html;
@@ -40,12 +39,45 @@ casper.test.begin('ClientUtils.exists() tests', 5, function(test) {
     test.assert(clientutils.exists('ul.foo li'),
         'ClientUtils.exists() checks that an element exist');
     // xpath
-    test.assert(clientutils.exists(x('//ul')),
+    test.assert(clientutils.exists( selectXPath('//ul')),
         'ClientUtils.exists() checks that an element exist using XPath');
-    test.assertNot(clientutils.exists(x('//ol')),
+    test.assertNot(clientutils.exists( selectXPath('//ol')),
         'ClientUtils.exists() checks that an element exist using XPath');
     fakeDocument(null);
     test.done();
+});
+
+casper.test.begin('ClientUtils.exists() with svg tests', 3, function(test) {
+  var clientutils = require('clientutils').create();
+  fakeDocument('<div class="foo"><svg><text>SVG</text></svg></div>');
+  test.assert(clientutils.exists('div.foo svg'),
+      'ClientUtils.exists() checks that an svg element exist');
+  test.assert(clientutils.exists(selectXPath('//div/svg:svg')),
+      'ClientUtils.exists() checks that an svg element exist using XPath');
+  test.assert(clientutils.exists(selectXPath('//div/svg:svg/svg:text')),
+      'ClientUtils.exists() checks that an svg element exist using XPath');
+  fakeDocument(null);
+  test.done();
+});
+
+casper.test.begin('ClientUtils.exists() with mathml tests', 3, function(test) {
+  var clientutils = require('clientutils').create();
+  var html = "<div class='foo'>We will now prove the Pythogorian theorem:";
+      html +=   "<math> <mrow>"
+      html +=     "<msup><mi> a </mi><mn>2</mn></msup> <mo> + </mo>";
+      html +=     "<msup><mi> b </mi><mn>2</mn></msup>";
+      html +=     "<mo> = </mo> <msup><mi> c </mi><mn>2</mn></msup>";
+      html +=   "</mrow> </math>";
+      html += "</div>";
+  fakeDocument(html);
+  test.assert(clientutils.exists('div.foo math'),
+      'ClientUtils.exists() checks that an math element exist');
+  test.assert(clientutils.exists(selectXPath('//div/mathml:math')),
+      'ClientUtils.exists() checks that an math element exist using XPath');
+  test.assert(clientutils.exists(selectXPath('//div/mathml:math/mathml:mrow/mathml:msup[1]')),
+      'ClientUtils.exists() checks that an math element exist using XPath');
+  fakeDocument(null);
+  test.done();
 });
 
 casper.test.begin('ClientUtils.findAll() tests', 7, function(test) {
@@ -65,7 +97,7 @@ casper.test.begin('ClientUtils.findAll() tests', 7, function(test) {
         'ClientUtils.findAll() can find matching DOM elements within a given scope');
     test.assertEquals(clientutils.findAll('li', scope).length, 2,
         'ClientUtils.findAll() can find matching DOM elements within a given scope');
-    test.assertType(clientutils.findAll(x('//li'), scope), 'array',
+    test.assertType(clientutils.findAll( selectXPath('//li'), scope), 'array',
         'ClientUtils.findAll() can find matching DOM elements using XPath within a given scope');
     fakeDocument(null);
     test.done();
@@ -82,7 +114,7 @@ casper.test.begin('ClientUtils.findOne() tests', 4, function(test) {
     var scope = clientutils.findOne('ul');
     test.assertType(clientutils.findOne('li', scope), 'htmllielement',
         'ClientUtils.findOne() can find a matching DOM element within a given scope');
-    test.assertType(clientutils.findOne(x('//li'), scope), 'htmllielement',
+    test.assertType(clientutils.findOne( selectXPath('//li'), scope), 'htmllielement',
         'ClientUtils.findOne() can find a matching DOM element using XPath within a given scope');
     fakeDocument(null);
     test.done();
@@ -100,7 +132,7 @@ casper.test.begin('ClientUtils.processSelector() tests', 6, function(test) {
     test.assertEquals(cssSelector.path, 'html body > ul.foo li',
         'ClientUtils.processSelector() can process a CSS3 selector');
     // XPath selector
-    var xpathSelector = clientutils.processSelector(x('//li[text()="blah"]'));
+    var xpathSelector = clientutils.processSelector( selectXPath('//li[text()="blah"]'));
     test.assertType(xpathSelector, 'object',
         'ClientUtils.processSelector() can process a XPath selector');
     test.assertEquals(xpathSelector.type, 'xpath',
@@ -231,7 +263,7 @@ casper.test.begin('ClientUtils.getElementsInfo() second element tests', 10, func
     test.done();
 });
 
-casper.test.begin('ClientUtils.getElementInfo() visibility tests', 4, function(test) {
+casper.test.begin('ClientUtils.getElementInfo() visibility tests', 7, function(test) {
     casper.page.content = '<a href="plop" class="plip plup" style="display: inline"><i>paf</i></a>';
     var info = casper.getElementInfo('a.plip');
     test.assert(info.visible, 'ClientUtils.getElementInfo() retrieves element visibility with display inline');
@@ -247,6 +279,53 @@ casper.test.begin('ClientUtils.getElementInfo() visibility tests', 4, function(t
     casper.page.content = '<a href="plop" class="plip plup" style="display: none"><i>paf</i></a>';
     info = casper.getElementInfo('a.plip');
     test.assertNot(info.visible, 'ClientUtils.getElementInfo() retrieves element visibility with display none');
+
+    casper.page.content = '<a href="plop" class="plip plup" style="display: inline-flex"><i>paf</i></a>';
+    info = casper.getElementInfo('a.plip');
+    test.assert(info.visible, 'ClientUtils.getElementInfo() retrieves element visibility with display inline-flex');
+
+    casper.page.content = '<a href="plop" class="plip plup" style="display: flex"><i>paf</i></a>';
+    info = casper.getElementInfo('a.plip');
+    test.assert(info.visible, 'ClientUtils.getElementInfo() retrieves element visibility with display flex');
+
+    casper.page.content = '<div style="display: none"><a href="plop" class="plip plup"><i>paf</i></a></div>';
+    info = casper.getElementInfo('a.plip');
+    test.assertNot(info.visible, 'ClientUtils.getElementInfo() retrieves element visibility when parent\'s display is set to none');
+
+
+    test.done();
+});
+
+casper.test.begin('ClientUtils.makeSelector() tests', 8, function(test) {
+    var clientutils = require('clientutils').create();
+
+    // CSS selector
+    var cssSelector = clientutils.makeSelector('#css3selector', 'css');
+    test.assertEquals(cssSelector, '#css3selector',
+        'ClientUtils.makeSelector() can process a CSS3 selector');
+
+    // XPath selector
+    var xpathSelector = clientutils.makeSelector('//li[text()="blah"]', 'xpath');
+    test.assertType(xpathSelector, 'object',
+        'ClientUtils.makeSelector() can process a XPath selector');
+    test.assertEquals(xpathSelector.type, 'xpath',
+        'ClientUtils.makeSelector() can process a XPath selector');
+    test.assertEquals(xpathSelector.path, '//li[text()="blah"]',
+        'ClientUtils.makeSelector() can process a XPath selector');
+
+    // Name selector
+    var nameSelector = clientutils.makeSelector('parameter', 'names');
+    test.assertEquals(nameSelector, '[name="parameter"]',
+        'ClientUtils.makeSelector() can process a XPath selector');
+
+    // Label selector
+    var labelSelector = clientutils.makeSelector('Male', 'labels');
+    test.assertType(labelSelector, 'object',
+        'ClientUtils.makeSelector() can process a Label selector');
+    test.assertEquals(labelSelector.type, 'xpath',
+        'ClientUtils.makeSelector() can process a Label selector');
+    test.assertEquals(labelSelector.path, '//*[@id=string(//label[text()="Male"]/@for)]',
+        'ClientUtils.makeSelector() can process a Label selector');
 
     test.done();
 });

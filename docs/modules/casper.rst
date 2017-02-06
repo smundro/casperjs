@@ -110,6 +110,8 @@ Logging level (see the logging section for more information)
 
 **Default:** ``null``
 
+**Signature:** ``onAlert(Object Casper, String message)``
+
 A function to be called when a javascript alert() is triggered
 
 ``onDie``
@@ -118,6 +120,8 @@ A function to be called when a javascript alert() is triggered
 **Type:** ``Function``
 
 **Default:** ``null``
+
+**Signature:** ``onDie(Object Casper, String message, String status)``
 
 A function to be called when Casper#die() is called
 
@@ -130,6 +134,8 @@ A function to be called when Casper#die() is called
 
 **Default:** ``null``
 
+**Signature:** ``onError(Object Casper, String msg, Array backtrace)``
+
 A function to be called when an "error" level event occurs
 
 .. index:: error, Error handling
@@ -141,6 +147,8 @@ A function to be called when an "error" level event occurs
 
 **Default:** ``null``
 
+**Signature:** ``onLoadError(Object Casper, String casper.requestUrl, String status)``
+
 A function to be called when a requested resource cannot be loaded
 
 ``onPageInitialized``
@@ -149,6 +157,8 @@ A function to be called when a requested resource cannot be loaded
 **Type:** ``Function``
 
 **Default:** ``null``
+
+**Signature:** ``onPageInitialized(Object page)``
 
 A function to be called after ``WebPage`` instance has been initialized
 
@@ -161,6 +171,8 @@ A function to be called after ``WebPage`` instance has been initialized
 
 **Default:** ``null``
 
+**Signature:** ``onResourceReceived(Object Casper, Object resource)``
+
 Proxy method for PhantomJS' ``WebPage#onResourceReceived()`` callback, but the current Casper instance is passed as first argument.
 
 .. index:: HTTP
@@ -171,6 +183,8 @@ Proxy method for PhantomJS' ``WebPage#onResourceReceived()`` callback, but the c
 **Type:** ``Function``
 
 **Default:** ``null``
+
+**Signature:** ``onResourceRequested(Object Casper, Object resource)``
 
 Proxy method for PhantomJS' WebPage#onResourceRequested() callback, but the current Casper instance is passed as first argument.
 
@@ -183,6 +197,8 @@ Proxy method for PhantomJS' WebPage#onResourceRequested() callback, but the curr
 
 **Default:** ``null``
 
+**Signature:** ``onStepComplete(Object Casper, stepResult)``
+
 A function to be executed when a step function execution is finished.
 
 .. index:: Step stack, Error handling, timeout
@@ -193,6 +209,8 @@ A function to be executed when a step function execution is finished.
 **Type:** ``Function``
 
 **Default:** ``Function``
+
+**Signature:** ``onStepTimeout(Integer timeout, Integer stepNum)``
 
 A function to be executed when a step function execution time exceeds the value of the stepTimeout option, if any has been set.
 
@@ -207,6 +225,8 @@ By default, on timeout the script will exit displaying an error, except in test 
 
 **Default:** ``Function``
 
+**Signature:** ``onTimeout(Integer timeout)``
+
 A function to be executed when script execution time exceeds the value of the timeout option, if any has been set.
 
 By default, on timeout the script will exit displaying an error, except in test environment where it will just add a failure to the suite results.
@@ -220,6 +240,8 @@ By default, on timeout the script will exit displaying an error, except in test 
 
 **Default:** ``Function``
 
+**Signature:** ``onWaitTimeout(Integer timeout)``
+
 A function to be executed when a ``waitFor*`` function execution time exceeds the value of the waitTimeout option, if any has been set.
 
 By default, on timeout the script will exit displaying an error, except in test environment where it will just add a failure to the suite results.
@@ -232,6 +254,10 @@ By default, on timeout the script will exit displaying an error, except in test 
 **Default:** ``null``
 
 An existing PhantomJS ``WebPage`` instance
+
+.. warning::
+
+   **Overriding** the ``page`` properties can cause some of the casper features **may not work**. For example, overriding the ``onUrlChanged`` property will cause the ``waitForUrl`` feature not work.
 
 .. index:: settings, PhantomJS, SSL, auth, XSS
 
@@ -454,7 +480,7 @@ Bypasses a given number of defined navigation steps::
 ``click()``
 -------------------------------------------------------------------------------
 
-**Signature:** ``click(String selector)``
+**Signature:** ``click(String selector, [Number|String X, Number|String Y])``
 
 Performs a click on the element matching the provided :doc:`selector expression <../selectors>`. The method tries two strategies sequentially:
 
@@ -474,6 +500,17 @@ Example::
         // Click on 1st result link
         this.click('h3.r a');
     });
+
+    casper.then(function() {
+        // Click on 1st result link
+        this.click('h3.r a',10,10);
+    });
+
+    casper.then(function() {
+        // Click on 1st result link
+        this.click('h3.r a',"50%","50%");
+    });
+
 
     casper.then(function() {
         console.log('clicked ok, new location is ' + this.getCurrentUrl());
@@ -704,7 +741,7 @@ Iterates over provided array items and execute a callback::
 
 .. hint::
 
-   Have a look at the `googlematch.js <https://github.com/n1k0/casperjs/blob/master/samples/googlematch.js>`_ sample script for a concrete use case.
+   Have a look at the `googlematch.js <https://github.com/casperjs/casperjs/blob/master/samples/googlematch.js>`_ sample script for a concrete use case.
 
 ``eachThen()``
 -------------------------------------------------------------------------------
@@ -764,7 +801,7 @@ Prints something to stdout, optionally with some fancy color (see the :ref:`colo
 
 **Signature:** ``evaluate(Function fn[, arg1[, arg2[, …]]])``
 
-Basically `PhantomJS' WebPage#evaluate <https://github.com/ariya/phantomjs/wiki/API-Reference#wiki-webpage-evaluate>`_ equivalent. Evaluates an expression **in the current page DOM context**::
+Basically `PhantomJS' WebPage#evaluate <http://phantomjs.org/api/webpage/method/evaluate.html>`_ equivalent. Evaluates an expression **in the current page DOM context**::
 
     casper.evaluate(function(username, password) {
         document.querySelector('#username').value = username;
@@ -778,7 +815,7 @@ Basically `PhantomJS' WebPage#evaluate <https://github.com/ariya/phantomjs/wiki/
 
 .. warning::
 
-   The pre-1.0 way of passing arguments using an object has been kept for BC purpose, though it may `not work in some case <https://github.com/n1k0/casperjs/issues/349>`_; so you're encouraged to use the method described above.
+   The pre-1.0 way of passing arguments using an object has been kept for BC purpose, though it may `not work in some case <https://github.com/casperjs/casperjs/issues/349>`_; so you're encouraged to use the method described above.
 
 .. topic:: Understanding ``evaluate()``
 
@@ -792,7 +829,7 @@ Basically `PhantomJS' WebPage#evaluate <https://github.com/ariya/phantomjs/wiki/
 ``evaluateOrDie()``
 -------------------------------------------------------------------------------
 
-**Signature:** ``evaluateOrDie(Function fn[, String message])``
+**Signature:** ``evaluateOrDie(Function fn[, String message, int status])``
 
 Evaluates an expression within the current page DOM and ``die()`` if it returns anything but ``true``::
 
@@ -812,6 +849,8 @@ Evaluates an expression within the current page DOM and ``die()`` if it returns 
 **Signature:** ``exit([int status])``
 
 Exits PhantomJS with an optional exit status code.
+
+Note: You can not rely on the fact that your script will be turned off immediately, because this method works asynchronously. It means that your script may continue to be executed after the call of this method. More info `here <https://github.com/casperjs/casperjs/issues/193>`_.
 
 .. index:: DOM
 
@@ -984,6 +1023,31 @@ are referenced by ``CSS3`` selectors::
         }, true);
     });
 
+``fillLabels()``
+-------------------------------------------------------------------------------
+
+**Signature:** ``fillLabels(String selector, Object values[, Boolean submit])``
+
+.. versionadded:: 1.1
+
+Fills a form with provided field values using associated label text Fields
+are referenced by label content values::
+
+    casper.start('http://some.tld/contact.form', function() {
+        this.fillLabels('form#contact-form', {
+            Email:         'chuck@norris.com',
+            Password:      'chuck',
+            Content:       'Am watching thou',
+            Check:         true,
+            No:            true,
+            Topic:         'bar',
+            Multitopic:    ['bar', 'car'],
+            File:          fpath,
+            "1":           true,
+            "3":           true,
+            Strange:       "very"
+        }, true);
+    });
 
 ``fillXPath()``
 -------------------------------------------------------------------------------
@@ -1308,16 +1372,46 @@ Retrieves current page title::
 ``mouseEvent()``
 -------------------------------------------------------------------------------
 
-**Signature:** ``mouseEvent(String type, String selector)``
+**Signature:** ``mouseEvent(String type, String selector, [Number|String X, Number|String Y])``
 
 .. versionadded:: 0.6.9
+.. versionupdate:: 1.1.0-beta6
 
 Triggers a mouse event on the first element found matching the provided selector.
 
-Supported events are ``mouseup``, ``mousedown``, ``click``, ``mousemove``, ``mouseover`` and ``mouseout``::
+Supported events are ``mouseup``, ``mousedown``, ``click``, ``dblclick``, ``mousemove``, ``mouseover``, ``mouseout``
+and for phantomjs >= 1.9.8 ``mouseenter``, ``mouseleave`` and ``contextmenu``::
+
+.. warning::
+The list of supported events depends on the version of the engine in use.
+Older engines only provide partial support. For best support use recent builds of PhantomJS or SlimerJS."
 
     casper.start('http://www.google.fr/', function() {
-        this.mouseEvent('click', 'h2 a');
+        this.mouseEvent('click', 'h2 a', "20%", "50%");
+    });
+
+    casper.run();
+
+``newPage()``
+-------------------------------------------------------------------------------
+
+**Signature:** ``newPage()``
+
+.. versionadded:: 1.1
+
+**Only available since version 1.1.0.**
+
+Creates a new WebPage instance::
+
+    casper.start('http://google.com', function() {
+        // ...
+    });
+
+    casper.then(function() {
+        casper.page = casper.newPage();
+        casper.open('http://yahoo.com').then( function() {
+            // ....
+        });
     });
 
     casper.run();
@@ -1373,6 +1467,22 @@ To pass nested parameters arrays::
     });
 
 .. versionadded:: 1.0
+
+To POST some data with utf-8 encoding::
+
+    casper.open('http://some.testserver.com/post.php', {
+           method: 'post',
+           headers: {
+               'Content-Type': 'application/json; charset=utf-8'
+           },
+           encoding: 'utf8', // not enforced by default
+           data: {
+                'table_flip': '(╯°□°）╯︵ ┻━┻ ',
+           }
+    });
+
+.. versionadded:: 1.1
+
 
 You can also set custom request headers to send when performing an outgoing request, passing the ``headers`` option::
 
@@ -1610,7 +1720,7 @@ Of course you can directly pass the auth string in the url to open::
 
 **Signature:** ``start(String url[, Function then])``
 
-Configures and starts Casper, then open the provided ``url`` and optionally adds the step provided by the ``then`` argument::
+Configures and starts Casper, then opens the provided ``url`` and optionally adds the step provided by the ``then`` argument::
 
     casper.start('http://google.fr/', function() {
         this.echo("I'm loaded.");
@@ -1856,7 +1966,7 @@ Adds a new navigation step to perform code evaluation within the current retriev
 
     casper.run();
 
-This method is basically a convenient a shortcut for chaining a `then()`_ and an `evaluate()`_ calls.
+This method is a convenient shortcut for chaining `then()`_ and `evaluate()`_ calls.
 
 ``thenOpen()``
 -------------------------------------------------------------------------------
@@ -2078,6 +2188,8 @@ Example using the ``onTimeout`` callback::
 ``details`` is a property bag of various information that will be passed to the ``waitFor.timeout`` event, if it is emitted.
 This can be used for better error messages or to conditionally ignore some timeout events.
 
+Please note, that all `waitFor` methods are not chainable.  Consider wrapping each of them in a `casper.then` in order to acheive this functionality.
+
 .. index:: alert
 
 ``waitForAlert()``
@@ -2100,7 +2212,7 @@ Waits until a `JavaScript alert <https://developer.mozilla.org/en-US/docs/Web/AP
 ``waitForPopup()``
 -------------------------------------------------------------------------------
 
-**Signature:** ``waitForPopup(String|RegExp urlPattern[, Function then, Function onTimeout, Number timeout])``
+**Signature:** ``waitForPopup(String|RegExp|Object urlPattern[, Function then, Function onTimeout, Number timeout])``
 
 .. versionadded:: 1.0
 
@@ -2117,7 +2229,27 @@ The currently loaded popups are available in the ``Casper.popups`` array-like pr
     casper.waitForPopup(/popup\.html$/, function() {
         this.test.assertEquals(this.popups.length, 1);
     });
+    
+    // this will wait for the first popup to be opened and loaded
+    casper.waitForPopup(0, function() {
+        this.test.assertEquals(this.popups.length, 1);
+    });
+    
+    // this will wait for the popup's named to be opened and loaded
+    casper.waitForPopup({windowName: "mainPopup"}, function() {
+        this.test.assertEquals(this.popups.length, 1);
+    });
 
+    // this will wait for the popup's title to be opened and loaded
+    casper.waitForPopup({title: "Popup Title"}, function() {
+        this.test.assertEquals(this.popups.length, 1);
+    });
+    
+    // this will wait for the popup's url to be opened and loaded
+    casper.waitForPopup({url: 'http://foo.bar/'}, function() {
+        this.test.assertEquals(this.popups.length, 1);
+    });
+    
     // this will set the popup DOM as the main active one only for time the
     // step closure being executed
     casper.withPopup(/popup\.html$/, function() {
@@ -2254,7 +2386,15 @@ Waits until an element matching the provided :doc:`selector expression <../selec
 
 **Signature:** ``waitWhileVisible(String selector[, Function then, Function onTimeout, Number timeout])``
 
-Waits until an element matching the provided :doc:`selector expression <../selectors>` is no longer visible in remote DOM to process a next step. Uses `waitFor()`_.
+Waits until an element matching the provided :doc:`selector expression <../selectors>` is no longer visible in remote DOM to process a next step. Uses `waitFor()`_::
+
+    var casper = require('casper').create();
+    
+    casper.start('https://www.example.com/').thenClick('html body div p a', function () { 
+        this.waitWhileVisible('body > div:nth-child(1) > p:nth-child(2)', function () {
+            this.echo("The selected element existed in previous page but doesn't exist in this page.");
+        })
+    }).run();
 
 ``warn()``
 -------------------------------------------------------------------------------
@@ -2327,6 +2467,18 @@ Switches the main page to a popup matching the information passed as argument, a
         this.test.assertTitle('Popup title');
     });
 
+    // this will set the popup DOM as the main active one only for time the
+    // step closure being executed
+    casper.withPopup(0, function() {
+        this.test.assertTitle('Popup title');
+    });
+    
+    // this will set the popup DOM as the main active one only for time the
+    // step closure being executed
+    casper.withPopup({windowName: "mainPopup", title:'Popup title', url:'http://foo.bar/'}, function() {
+        this.test.assertTitle('Popup title');
+    });
+    
     // next step will automatically revert the current page to the initial one
     casper.then(function() {
         this.test.assertTitle('Main page title');

@@ -30,8 +30,8 @@ I'm stuck! I think there's a bug! What can I do?
 Before rage-tweeting:
 
 1. Read the `docs <http://casperjs.org/>`_
-2. Check if an `issue <https://github.com/n1k0/casperjs/issues>`_ has been open about your problem already
-3. Check you're running the `latest stable tag <https://github.com/n1k0/casperjs/tags>`_
+2. Check if an `issue <https://github.com/casperjs/casperjs/issues>`_ has been open about your problem already
+3. Check you're running the `latest stable tag <https://github.com/casperjs/casperjs/tags>`_
 4. Check you're running the `latest version <http://code.google.com/p/phantomjs/downloads/list>`_ of PhantomJS_
 5. Ask on the `project mailing list <https://groups.google.com/forum/#!forum/casperjs>`_:
 
@@ -39,7 +39,7 @@ Before rage-tweeting:
    b. compare casperjs results with native phantomjs ones
    c. if the problem also occurs with native phantomjs, ask on `phantomjs mailing list <https://groups.google.com/forum/#!forum/phantomjs>`_
 
-6. Eventually, `file an issue <https://github.com/n1k0/casperjs/issues/new>`_.
+6. Eventually, `file an issue <https://github.com/casperjs/casperjs/issues/new>`_.
 
 
 .. index:: Testing
@@ -360,3 +360,43 @@ Here are some great resources to get started efficiently with the language:
 .. _PhantomJS: http://phantomjs.org/
 .. _Qt: http://qt.digia.com/
 .. _WebKit: http://www.webkit.org/
+
+How do I use PhantomJS page module API in casperjs?
+---------------------------------------------------
+
+After casperjs.start(), you have phantomjs page module available in casper.page (http://docs.casperjs.org/en/latest/modules/casper.html#page)
+
+You can simply do like below::
+
+  casper.page.nameOfMethod()
+
+PhantomJS Web Page API: http://phantomjs.org/api/webpage/
+
+
+How do I provide my implementation of a remote resource?
+--------------------------------------------------------
+
+Using phantomjs native `onResourceRequested` event, you can override remote resource url to your own implementation. Your own implementation file can be provided from local path too::
+
+  casper.page.onResourceRequested = function(requestData, networkRequest) {
+     var match = requestData.url.match(/wordfamily.js/g);
+     if (match != null) {
+        console.log('Request (#' + requestData.id + '): ' + JSON.stringify(requestData));
+
+        // overrides wordfamily.js to local newWordFamily.js
+        networkRequest.changeUrl('newWordFamily.js');
+     }
+  };
+
+I'm getting intermittent test failure, what can I do to fix them?
+-----------------------------------------------------------------
+
+This is probably because you are executing a test before the resource or element is available and the page is fully loaded/rendered.  This can even happen on things like modals and dynamic content.
+
+You can solve this problem by using the `wait*` operations::
+
+  casper.thenOpen(url, function initialAppearance() {
+    casper.waitForText('Text in deep part of page or modal');
+  });
+
+It is good practice to wait for DOM nodes, text, or resources before beginning your tests.  It will help make them stable and predictable while still running fast.

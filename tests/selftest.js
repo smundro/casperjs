@@ -1,4 +1,3 @@
-/*global phantom, casper, patchRequire, require:true*/
 
 var require = patchRequire(require);
 var colorizer = require('colorizer').create('Colorizer');
@@ -8,14 +7,25 @@ var server = require('webserver').create();
 var service;
 var testServerPort = 54321;
 
+var contentTypes = {
+    html: {type: 'text/html', binMode: false},
+    js: {type: 'application/javascript', binMode: false},
+    json: {type: 'application/json', binMode: false},
+    txt: {type: 'text/plain', binMode: false},
+    png: {type: 'image/png', binMode: true},
+    notype: {type: null, binMode: false},
+    _default: {type: 'application/octet-stream', binMode: true}
+};
+var extensionRE = /\.([a-zA-Z]*)$/;
+
 function info(message) {
     "use strict";
     console.log(colorizer.colorize('INFO', 'INFO_BAR') + ' ' + message);
 }
 
 service = server.listen(testServerPort, function(request, response) {
-    /*jshint maxstatements:20*/
     "use strict";
+    /*eslint max-statements:0*/
     var requestPath = request.url;
     if (requestPath.indexOf('?') !== -1) {
         requestPath = request.url.split('?')[0];
@@ -27,14 +37,20 @@ service = server.listen(testServerPort, function(request, response) {
         response.write("404 - NOT FOUND");
     } else {
         var headers = {};
-        var binMode = false;
-        if (/js$/.test(pageFile)) {
-            headers['Content-Type'] = "application/javascript";
+        var binMode;
+
+        var extension = extensionRE.exec(pageFile);
+        extension = extension && extension[1];
+        var contentType = contentTypes[extension] ||
+                          contentTypes._default;
+
+        if (contentType.type) {
+            headers['Content-Type'] = contentType.type;
         }
-        else if (/png$/.test(pageFile)) {
-            binMode = true;
-        }
+        binMode = contentType.binMode;
+
         response.writeHead(200, headers);
+
         if (binMode) {
             response.write(fs.read(pageFile, 'b'));
         }
